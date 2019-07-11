@@ -109,7 +109,6 @@ class Carousel {
       this.imageCont.style.marginLeft = -(currentMargin + diffMargin * progress) + "px";
       progress += speed;
       if(progress >= 1){
-        this.imageCont.style.marginLeft = -endMargin + "px";
         this.finishCurrentAnimation();
         this.startLoop();
       }
@@ -131,11 +130,13 @@ class Carousel {
   }
 
   jumpTo (i) {
-    this.clearTime();
-    this.animateTo(i);
-    this.bulletList.children[this.currentIndex].classList.remove('active');
-    this.currentIndex = i;
-    this.bulletList.children[i].classList.add('active');
+    if(!this.isAnimating){
+      this.clearTime();
+      this.animateTo(i);
+      this.bulletList.children[this.currentIndex].classList.remove('active');
+      this.currentIndex = i;
+      this.bulletList.children[i].classList.add('active');
+    }
   }
 
   static register(selector, options) {
