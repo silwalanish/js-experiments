@@ -6,7 +6,7 @@ class PipePair {
 	constructor (game, height) {
 		this.game = game;
 		this.pipeTop = new Pipe(this.game, height, true);
-		this.pipeBottom = new Pipe(this.game, this.game.height - height - 4 * this.game.flappy.height);
+		this.pipeBottom = new Pipe(this.game, this.game.height - height - 3.5 * this.game.flappy.height);
 		this.scoreAdded = false;
 	}
 

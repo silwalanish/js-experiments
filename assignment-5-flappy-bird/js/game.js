@@ -1,6 +1,6 @@
 const GAME_DEFAULT_WIDTH = 300;
 const GAME_DEFAULT_HEIGHT = 600;
-const GAME_GRAVITY = 0.3;
+const GAME_GRAVITY = 0.5;
 const GAME_DEFAULT_PIPE_SPEED = 50;
 const GAME_DEFAULT_BACKGROUND = "#33a5ff";
 
@@ -47,6 +47,8 @@ class Game{
       document.write("canvas not supported");
       return;
     }
+    this.highScore = Number(window.localStorage.getItem('flappy-highScore'));
+    this.hasSetHighScore = false;
 
     document.addEventListener('keydown', (e) => {
       this.keyPress(e);
@@ -62,25 +64,29 @@ class Game{
     this.score = 0;
     this.flappy = null;
     this.pipes = [];
-    this.playing = false;
+    this.isRunning = false;
+    this.isPlaying = false;
     this.backgroundOffset = 0;
     this.timer = 0;
 
-    this.el.addEventListener('click', this.click.bind(this));
+    this.el.addEventListener('click', this.onClick.bind(this));
 
     this.startTime = Date.now();
     this.gameloop();
   }
 
-  keyPress (e) {
+  onKeyPress (e) {
     
   }
 
-  click (e) {
-    if(this.playing && this.flappy && this.flappy.isAlive()){
+  onClick (e) {
+    if(this.isPlaying && this.flappy && this.flappy.isAlive()){
       this.flappy.moveUp();
-    }else if(!this.playing){
+    }else if(!this.isRunning){
       this.start();
+    }else if(this.isRunning && !this.isPlaying){
+      this.isPlaying = true;
+      this.flappy.moveUp();
     }
   }
 
@@ -115,16 +121,18 @@ class Game{
     this.draw();
     this.update(deltaTime);
     
-    if(this.playing){
+    if(this.isRunning){
       this.backgroundOffset += 10 * deltaTime;
       if(this.backgroundOffset > this.options.backgroundSprite.sw){
         this.backgroundOffset = 0;
       }
-
-      this.timer += deltaTime;
-      if(this.timer >= 4){
-        this.timer = 0;
-        this.generate();
+      
+      if(this.isPlaying){
+        this.timer += deltaTime;
+        if(this.timer >= 4){
+          this.timer = 0;
+          this.generate();
+        }
       }
     }
     
@@ -142,11 +150,22 @@ class Game{
       this.flappy.draw(this.context);
     }
     
-    this.context.beginPath();
-    this.context.font = "normal 40px arial";
-    this.context.strokeStyle = "#ffffff";
-    this.context.strokeText(this.score, this.width / 2, this.height / 4);
-    this.context.closePath();
+    if(this.isRunning){
+      this.context.beginPath();
+      this.context.font = "normal 40px arial";
+      this.context.strokeStyle = "#ffffff";
+      this.context.strokeText(this.score, this.width / 2, this.height / 4);
+      this.context.closePath();
+    }else if(this.hasSetHighScore){
+      this.context.beginPath();
+      this.context.textAlign = "center";
+      this.context.font = "normal 30px arial";
+      this.context.strokeStyle = "#FFFF00";
+      this.context.strokeText("New High Score", this.width / 2, this.height / 4);
+      this.context.strokeText(this.score, this.width / 2, this.height / 4 + 35);
+      this.context.closePath();
+    }
+
   }
 
   update (deltaTime) {
@@ -170,7 +189,7 @@ class Game{
 
     if(this.flappy){
       this.flappy.update(deltaTime);
-      if(this.flappy.onTheGround() && this.playing){
+      if(this.flappy.onTheGround() && this.isRunning){
         this.flappy.fainted = true;
         this.gameover();
       }
@@ -186,12 +205,13 @@ class Game{
 
     let flyingFlappy = new SpriteAnimation(new Sprite("./images/flappy-sprite-sheet.png", 0, 0, 66, 64), 0, 7, 10);
     let faintedFlappy = new SpriteAnimation(new Sprite("./images/flappy-fainted-sprite-sheet.png", 0, 0, 66, 64), 0, 1, 5);
-    this.flappy = new FlappyBird(this, 50, 50, 60, 66, flyingFlappy, faintedFlappy);
+    this.flappy = new FlappyBird(this, 50, (this.height - this.options.groundSprite.sh) / 3, 60, 66, flyingFlappy, faintedFlappy);
 
     this.pipeSpeed = this.options.pipeSpeed || GAME_DEFAULT_PIPE_SPEED;
 
     this.startTime = Date.now();
-    this.playing = true;
+    this.isRunning = true;
+    this.isPlaying = false;
   }
   
   generate () {
@@ -201,17 +221,22 @@ class Game{
   }
 
   pause () {
-    this.playing = false;
+    this.isRunning = false;
     clearInterval(this.generator);
   }
 
   resume () {
-    this.playing = true;
+    this.isRunning = true;
   }
 
   gameover () {
-    this.playing = false;
+    this.isRunning = false;
     this.playBtn.style.display = "block";
+    if(this.score > this.highScore){
+      this.highScore = this.score;
+      this.hasSetHighScore = true;
+      window.localStorage.setItem('flappy-highScore', this.highScore);
+    }
   }
 
 }

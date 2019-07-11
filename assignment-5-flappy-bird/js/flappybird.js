@@ -19,18 +19,23 @@ class FlappyBird{
     ctx.beginPath();
     ctx.save();
     ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-    ctx.rotate(this.angle);
+    ctx.rotate(Math.min(Math.max(this.angle, -Math.PI / 4), Math.PI / 2));
     this.currentAnimation.render(ctx, -this.width / 2, -this.height / 2, this.width, this.height);
     ctx.restore();
     ctx.closePath();
   }
 
   update (deltaTime) {
-    if(this.isAlive() || !this.onTheGround()){
+    if((this.isAlive() || !this.onTheGround()) && this.game.isPlaying){
       this.y += this.speed;
       this.speed += this.game.gravity;
-      this.angle += Math.atan2(this.speed * 0.01, 0) * deltaTime;
+      this.angle += Math.atan2(this.speed, this.x);
+      if(this.y < 0){
+        this.y = 0;
+        this.speed = 0;
+      }
     }
+
     if(this.isAlive()){
       this.currentAnimation = this.flyingAnimation;
     }else{
@@ -42,8 +47,8 @@ class FlappyBird{
   }
 
   moveUp () {
-    this.angle = -Math.PI / 4;
-    this.speed = -5;
+    //this.angle = -45;
+    this.speed = -10;
   }
 
   onTheGround () {

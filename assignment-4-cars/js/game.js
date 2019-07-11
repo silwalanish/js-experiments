@@ -66,8 +66,12 @@ class Game{
     this.el.appendChild(this.canvas);
 
     this.context = this.canvas.getContext('2d');
+    if(! this.context){
+      document.write("canvas not supported");
+      return;
+    }
     this.highScore = Number(window.localStorage.getItem('highScore'));
-    this.highScoreSet = false;
+    this.hasSetHighScore = false;
 
     document.addEventListener('keydown', (e) => {
       this.keyPress(e);
@@ -137,10 +141,10 @@ class Game{
   addScore (score) {
     this.score += score;
     if (this.score % 500 == 0) {
-      this.carSpeed += 50; 
+      //this.carSpeed += 50; 
       
       if(this.spawnSpeed > GAME_MIN_SPAWN_SPEED){
-        this.spawnSpeed -= 50;
+        this.spawnSpeed -= 200;
       }
     }
   }
@@ -182,7 +186,7 @@ class Game{
     this.context.strokeText(this.spawnSpeed / 1000 + "sec", 5 * this.laneWidth / 2, 30);
     this.context.closePath();
 
-    if(this.highScoreSet){
+    if(this.hasSetHighScore){
       this.context.beginPath();
       this.context.textAlign = "center";
       this.context.font = "normal 30px arial";
@@ -215,7 +219,7 @@ class Game{
       let car = this.cars[i];
       car.update(deltaTime);
       if(car != this.player){
-        let carRemoved = false;
+        let isCarRemoved = false;
         for(let j = 0; j < this.bullets.length; j++){
           let bullet = this.bullets[j];
           if(car.contains(bullet.x, bullet.y)){
@@ -223,19 +227,19 @@ class Game{
             this.cars.splice(i, 1);
             this.bullets.splice(j, 1);
             i--;
-            carRemoved = true;
+            isCarRemoved = true;
             break;
           }
         }
-        if(!carRemoved && car.lane == this.player.lane){
+        if(!isCarRemoved && car.lane == this.player.lane){
           if(car.collides(this.player) && !carRemoved){
             this.gameover();
           }
+        }else if(car.y > this.height){
+          this.addScore(100);
+          this.cars.splice(i, 1);
+          i--;
         }
-      }else if(car.y > this.height){
-        this.addScore(100);
-        this.cars.splice(i, 1);
-        i--;
       }
     }
     
@@ -244,7 +248,7 @@ class Game{
 
   start () {
     this.isPlaying = true;
-    this.highScoreSet = false;
+    this.hasSetHighScore = false;
     
     this.laneHeight = this.options.laneHeight || GAME_DEFAULT_LANE_START_HEIHT;
     this.laneWidth = this.options.laneWidth || GAME_DEFAULT_LANE_WIDTH;
@@ -280,7 +284,7 @@ class Game{
     this.playBtn.style.display = "block";
     if(this.score > this.highScore){
       this.highScore = this.score;
-      this.highScoreSet = true;
+      this.hasSetHighScore = true;
       window.localStorage.setItem('highScore', this.highScore);
     }
   }
