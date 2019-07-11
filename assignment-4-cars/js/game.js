@@ -7,10 +7,6 @@ const GAME_DEFAULT_LANE_START_HEIHT = 50;
 const GAME_DEFAULT_LANE_START_OFFSET = 5;
 const GAME_DEFAULT_LANE_START_GAP = 15;
 
-const CAR_WIDTH = 50;
-const CAR_HEIGHT = 80;
-const CAR_SPEED = 100;
-
 const KEY_A = 65;
 const KEY_D = 68;
 const KEY_LEFT = 37;
@@ -28,66 +24,6 @@ const TEXTURE_X = 2;
 const TEXTURE_Y = 4;
 const TEXTURE_WIDTH = 72;
 const TEXTURE_HEIGHT = 122;
-
-class Car{
-
-  constructor (game, lane, isPlayer, speed, width, height) {
-    this.isPlayer = isPlayer || false;
-    
-    this.width = width || CAR_WIDTH;
-    this.height = height || CAR_HEIGHT;
-
-    this.lane = (lane != "undefined") ? lane: 1;
-    this.x = ((this.lane + (1/2)) * game.laneWidth) - (this.width / 2);
-    
-    this.y = this.isPlayer ? game.height - this.height: -this.height;
-
-    this.speed = speed || CAR_SPEED;
-    this.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
-    this.textureIndex = Math.floor(Math.random() * NUM_TEXTURE);
-  }
-
-  calcX () {
-    this.x = ((this.lane + (1/2)) * game.laneWidth) - (this.width / 2);
-  }
-
-  draw (ctx) {
-    ctx.beginPath();
-    ctx.save();
-    ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-    if(!this.isPlayer){
-      ctx.rotate(Math.PI);
-    }
-    if(CAR_TEXTURE_LOADED){
-      ctx.drawImage(CAR_TEXTURE, (TEXTURE_X  + TEXTURE_WIDTH) * this.textureIndex, TEXTURE_Y, TEXTURE_WIDTH, TEXTURE_HEIGHT, 
-        -this.width / 2, -this.height / 2, this.width, this.height);
-    }else{
-      ctx.fillStyle = this.color;
-      ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
-    }
-    ctx.restore();
-    ctx.closePath();
-  }
-
-  update (deltaTime) {
-    if(!this.isPlayer){
-      this.y += this.speed * deltaTime;
-    }
-  }
-
-  collides (car) {
-    return this.contains(car.x, car.y) || 
-           this.contains(car.x + car.width, car.y) ||
-           this.contains(car.x, car.y + car.height) ||
-           this.contains(car.x + car.width, car.y + car.height);
-  }
-
-  contains (x, y) {
-    return (x >= this.x && x <= (this.x + this.width)) && 
-           (y >= this.y && y <= (this.y + this.height));
-  } 
-
-}
 
 class Game{
 
@@ -122,8 +58,6 @@ class Game{
     this.playBtn.style.transform = "translate(-50%, -50%)";
     this.playBtn.addEventListener('click', () => { 
       this.start(); 
-      console.log("okay");
-      
       this.playBtn.style.display = "none";
     });
     
@@ -143,11 +77,9 @@ class Game{
 
   keyPress (e) {
     if((e.keyCode === KEY_A || e.keyCode == KEY_LEFT) && this.player.lane > 0){
-      this.player.lane --;
-      this.player.calcX();
+      this.player.moveLeft();
     }else if((e.keyCode === KEY_D || e.keyCode == KEY_RIGHT) && this.player.lane < 2){
-      this.player.lane ++;
-      this.player.calcX();
+      this.player.moveRight();
     }
   }
 

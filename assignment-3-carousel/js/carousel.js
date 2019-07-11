@@ -14,8 +14,7 @@ class Carousel {
     this.width = this.options.width || this.images[0].width;
     this.height = this.options.height || this.images[0].height;
  
-
-    this.init();    
+    this.init();
   }
 
   init () {
@@ -57,13 +56,18 @@ class Carousel {
     prevBtn.classList.add('prev');
     this.el.appendChild(prevBtn);
     prevBtn.addEventListener('click', () => {
-      this.prev();
+      if(!this.isAnimating){
+        this.prev();
+      }
     });
+
     let nextBtn = document.createElement('div');
     nextBtn.classList.add('next');
     this.el.appendChild(nextBtn);
     nextBtn.addEventListener('click', () => {
-      this.next();
+      if(!this.isAnimating){
+        this.next();
+      }
     });
   }
 
@@ -85,6 +89,7 @@ class Carousel {
     this.imageCont.style.marginLeft = -this.currentIndex * this.width + "px";
     clearInterval(this.animator);
     this.animator = null;
+    this.isAnimating = false;
   }
 
   animateTo (n){
@@ -97,6 +102,8 @@ class Carousel {
     if(this.animator){
       this.finishCurrentAnimation();
     }
+
+    this.isAnimating = true;
 
     this.animator = setInterval(() => {
       this.imageCont.style.marginLeft = -(currentMargin + diffMargin * progress) + "px";
