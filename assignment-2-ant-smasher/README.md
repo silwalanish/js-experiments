@@ -1,6 +1,6 @@
 # AntSmasher
 Demo
-https://silwalanish.github.io/AntSmasher
+https://silwalanish.github.io/js-experiments/assignment-2-ant-smasher/
 
 
 Ant Texture From:

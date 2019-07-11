@@ -1,4 +1,4 @@
 # Carousel.js
 
 Demo:
-https://silwalanish.github.io/Carousel.js
+https://silwalanish.github.io/js-experiments/assignment-3-carousel/
