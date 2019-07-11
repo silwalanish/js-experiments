@@ -1,10 +1,10 @@
 # js-experiments
 
 Ball Simulation
-https://siwalanish.github.io/js-experiments/assignment-1-ball-simulation/
+https://silwalanish.github.io/js-experiments/assignment-1-ball-simulation/
 
 Ant Smasher
-https://siwalanish.github.io/js-experiments/assignment-2-ant-smasher/
+https://silwalanish.github.io/js-experiments/assignment-2-ant-smasher/
 
 Carousel.js
 https://silwalanish.github.io/js-experiments/assignment-3-carousel/
