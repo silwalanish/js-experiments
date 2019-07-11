@@ -9,6 +9,7 @@ const GAME_DEFAULT_LANE_START_GAP = 15;
 
 const KEY_A = 65;
 const KEY_D = 68;
+const KEY_F = 70;
 const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
 
@@ -76,10 +77,16 @@ class Game{
   }
 
   keyPress (e) {
-    if((e.keyCode === KEY_A || e.keyCode == KEY_LEFT) && this.player.lane > 0){
-      this.player.moveLeft();
-    }else if((e.keyCode === KEY_D || e.keyCode == KEY_RIGHT) && this.player.lane < 2){
-      this.player.moveRight();
+    if(this.isPlaying){
+      if((e.keyCode === KEY_A || e.keyCode == KEY_LEFT) && this.player.lane > 0){
+        this.player.moveLeft();
+      }else if((e.keyCode === KEY_D || e.keyCode == KEY_RIGHT) && this.player.lane < 2){
+        this.player.moveRight();
+      }
+
+      if(e.keyCode === KEY_F){
+       this.spawnBullet(); 
+      }
     }
   }
 
@@ -104,6 +111,11 @@ class Game{
     this.context.closePath();
   }
 
+  spawnBullet () {
+    let bullet = new Bullet(this, this.player.x + this.player.width / 2, this.player.y);  
+    this.bullets.push(bullet);
+  }
+
   generateCars () {
     let numCars = Math.floor(Math.random() * 2) + 1;
     
@@ -122,6 +134,17 @@ class Game{
     }, this.spawnSpeed);
   }
 
+  addScore (score) {
+    this.score += score;
+    if (this.score % 500 == 0) {
+      this.carSpeed += 50; 
+      
+      if(this.spawnSpeed > GAME_MIN_SPAWN_SPEED){
+        this.spawnSpeed -= 50;
+      }
+    }
+  }
+
   gameloop () {
       let currentTime = Date.now();
       let deltaTime = (currentTime - this.startTime) / 1000;
@@ -130,7 +153,7 @@ class Game{
       
       this.draw();
 
-    if(this.playing){
+    if(this.isPlaying){
       this.update(deltaTime);
     }else{
       clearTimeout(this.generator);
@@ -142,6 +165,10 @@ class Game{
   }
 
   draw () {
+    this.bullets.forEach(bullet => {
+      bullet.draw(this.context);
+    });
+
     this.cars.forEach(car => {
       car.draw(this.context);
     });
@@ -163,31 +190,60 @@ class Game{
       this.context.strokeText("New High Score", this.width / 2, this.height / 4);
       this.context.strokeText(this.score, this.width / 2, this.height / 4 + 35);
       this.context.closePath();
+    }else if(this.isPlaying){
+      this.context.beginPath();
+      this.context.textAlign = "center";
+      this.context.font = "normal 30px arial";
+      this.context.strokeStyle = "#FFFF00";
+      this.context.strokeText(this.score, this.width / 2, this.height / 4 + 35);
+      this.context.closePath();
     }
   }
 
   update (deltaTime) {
-    this.cars.forEach((car, index) => {
+    
+    for(let i = 0; i < this.bullets.length; i++){
+      let bullet = this.bullets[i];
+      bullet.update(deltaTime);
+      if(!bullet.isAlive()){
+        this.bullets.splice(i, 1);
+        i--;
+      }
+    }
+
+    for(let i = 0; i < this.cars.length; i++){
+      let car = this.cars[i];
       car.update(deltaTime);
-      if(car != this.player && car.lane == this.player.lane){
-        if(car.collides(this.player)){
-          this.gameover();
+      if(car != this.player){
+        let carRemoved = false;
+        for(let j = 0; j < this.bullets.length; j++){
+          let bullet = this.bullets[j];
+          if(car.contains(bullet.x, bullet.y)){
+            this.addScore(50);
+            this.cars.splice(i, 1);
+            this.bullets.splice(j, 1);
+            i--;
+            carRemoved = true;
+            break;
+          }
+        }
+        if(!carRemoved && car.lane == this.player.lane){
+          if(car.collides(this.player) && !carRemoved){
+            this.gameover();
+          }
         }
       }else if(car.y > this.height){
-        this.score += 100;
-        this.carSpeed += 5;
-        if(this.spawnSpeed > GAME_MIN_SPAWN_SPEED){
-          this.spawnSpeed -= 50;
-        }
-        this.cars.splice(index, 1);
+        this.addScore(100);
+        this.cars.splice(i, 1);
+        i--;
       }
-    });
+    }
     
-    this.laneOffset += this.carSpeed * deltaTime;
+    this.laneOffset += (this.carSpeed - 5) * deltaTime;
   }
 
   start () {
-    this.playing = true;
+    this.isPlaying = true;
     this.highScoreSet = false;
     
     this.laneHeight = this.options.laneHeight || GAME_DEFAULT_LANE_START_HEIHT;
@@ -199,6 +255,8 @@ class Game{
     this.cars = [ this.player ];
     this.carSpeed = this.options.carSpeed || CAR_SPEED;
     this.spawnSpeed = GAME_DEFAULT_START_SPAWN_SPEED;
+
+    this.bullets = [];
     this.score = 0;
     
     this.generateCars();
@@ -208,17 +266,17 @@ class Game{
   }
 
   pause () {
-    this.playing = false;
+    this.isPlaying = false;
     clearTimeout(this.generator);
   }
 
   resume () {
-    this.playing = true;
+    this.isPlaying = true;
     this.generateCars();
   }
 
   gameover () {
-    this.playing = false;
+    this.isPlaying = false;
     this.playBtn.style.display = "block";
     if(this.score > this.highScore){
       this.highScore = this.score;
