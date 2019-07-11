@@ -131,6 +131,8 @@ class Game{
     this.el.appendChild(this.canvas);
 
     this.context = this.canvas.getContext('2d');
+    this.highScore = Number(window.localStorage.getItem('highScore'));
+    this.highScoreSet = false;
 
     document.addEventListener('keydown', (e) => {
       this.keyPress(e);
@@ -189,13 +191,15 @@ class Game{
   }
 
   gameloop () {
-    if(this.playing){
       let currentTime = Date.now();
       let deltaTime = (currentTime - this.startTime) / 1000;
       this.startTime = currentTime;
       this.clear();
-      this.update(deltaTime);
+      
       this.draw();
+
+    if(this.playing){
+      this.update(deltaTime);
     }else{
       clearTimeout(this.generator);
     }
@@ -211,12 +215,23 @@ class Game{
     });
     
     this.context.beginPath();
+    this.context.textAlign = "center";
     this.context.font = "normal 15px arial";
     this.context.strokeStyle = "#ffffff";
-    this.context.strokeText(this.score, 10, 30);
-    this.context.strokeText(this.carSpeed + "mps", this.width / 2 - 30, 30);
-    this.context.strokeText(this.spawnSpeed / 1000 + "sec", this.width - 80, 30);
+    this.context.strokeText(this.score, this.laneWidth / 2, 30);
+    this.context.strokeText(this.carSpeed + "mps", 3 * this.laneWidth / 2, 30);
+    this.context.strokeText(this.spawnSpeed / 1000 + "sec", 5 * this.laneWidth / 2, 30);
     this.context.closePath();
+
+    if(this.highScoreSet){
+      this.context.beginPath();
+      this.context.textAlign = "center";
+      this.context.font = "normal 30px arial";
+      this.context.strokeStyle = "#FFFF00";
+      this.context.strokeText("New High Score", this.width / 2, this.height / 4);
+      this.context.strokeText(this.score, this.width / 2, this.height / 4 + 35);
+      this.context.closePath();
+    }
   }
 
   update (deltaTime) {
@@ -232,7 +247,6 @@ class Game{
         if(this.spawnSpeed > GAME_MIN_SPAWN_SPEED){
           this.spawnSpeed -= 50;
         }
-        
         this.cars.splice(index, 1);
       }
     });
@@ -242,6 +256,7 @@ class Game{
 
   start () {
     this.playing = true;
+    this.highScoreSet = false;
     
     this.laneHeight = this.options.laneHeight || GAME_DEFAULT_LANE_START_HEIHT;
     this.laneWidth = this.options.laneWidth || GAME_DEFAULT_LANE_WIDTH;
@@ -273,7 +288,11 @@ class Game{
   gameover () {
     this.playing = false;
     this.playBtn.style.display = "block";
-    this.score = 0;
+    if(this.score > this.highScore){
+      this.highScore = this.score;
+      this.highScoreSet = true;
+      window.localStorage.setItem('highScore', this.highScore);
+    }
   }
 
 }

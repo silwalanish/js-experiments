@@ -49,6 +49,7 @@ class Carousel {
 
   clearTime () {
     clearInterval(this.changer);
+    this.changer = null;
   }
 
   addButtons () {
@@ -80,6 +81,12 @@ class Carousel {
     this.el.appendChild(this.bulletList);
   }
 
+  finishCurrentAnimation () {
+    this.imageCont.style.marginLeft = -this.currentIndex * this.width + "px";
+    clearInterval(this.animator);
+    this.animator = null;
+  }
+
   animateTo (n){
     let currentMargin = this.currentIndex * this.width;
     let endMargin = n * this.width;
@@ -87,14 +94,16 @@ class Carousel {
     let progress = 0;
     let speed = Math.abs(n - this.currentIndex) / this.options.transitionTime;
 
-    clearInterval(this.animator);
+    if(this.animator){
+      this.finishCurrentAnimation();
+    }
 
     this.animator = setInterval(() => {
       this.imageCont.style.marginLeft = -(currentMargin + diffMargin * progress) + "px";
       progress += speed;
       if(progress >= 1){
         this.imageCont.style.marginLeft = -endMargin + "px";
-        clearInterval(this.animator);
+        this.finishCurrentAnimation();
         this.startLoop();
       }
     }, speed * this.width);
