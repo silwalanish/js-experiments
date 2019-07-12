@@ -3,10 +3,9 @@ const SPRITE_TOP_OFFSET = 5;
 
 class PipePair {
 
-	constructor (game, height) {
-		this.game = game;
-		this.pipeTop = new Pipe(this.game, height, true);
-		this.pipeBottom = new Pipe(this.game, this.game.height - height - 3.5 * this.game.flappy.height);
+	constructor (startX, height, gameHeight, flappyHeight, groundPos) {
+		this.pipeTop = new Pipe(startX, height, true);
+		this.pipeBottom = new Pipe(startX, gameHeight - height - 3.5 * flappyHeight, false, groundPos);
 		this.scoreAdded = false;
 	}
 
@@ -15,9 +14,9 @@ class PipePair {
 		this.pipeBottom.draw(ctx);
 	}
 
-	update (deltaTime) {
-		this.pipeTop.update(deltaTime);
-		this.pipeBottom.update(deltaTime);
+	update (deltaTime, pipeSpeed) {
+		this.pipeTop.update(deltaTime, pipeSpeed);
+		this.pipeBottom.update(deltaTime, pipeSpeed);
 	}
 
 	canCollideWith (flappy) {
@@ -48,7 +47,7 @@ class PipePair {
 		return false;
 	}
 
-	isOutOfLeftBounds () {
+	hasGoneOutOfLBounds () {
 		return (this.pipeTop.x + this.pipeTop.width <= 0);
 	}
 
@@ -56,12 +55,11 @@ class PipePair {
 
 class Pipe{
 	
-	constructor(game, height, top){
-		this.game = game;
+	constructor(startX, height, top, groundPos){
 		this.height = height;
 		this.top = top || false;
-		this.x = this.game.width;
-		this.y = (this.top) ? 0: this.game.height - this.height - this.game.options.groundSprite.sh;
+		this.x = startX;
+		this.y = (this.top) ? 0: groundPos - this.height;
 		this.width = 50;
 		this.spriteTop = new Sprite("./images/pipe-top.png", 0, 0);
 		this.spriteBody = new Sprite("./images/pipe-body.png", 0, 0);
@@ -82,8 +80,8 @@ class Pipe{
 		ctx.closePath();
 	}
 	
-	update (deltaTime){
-		this.x -= this.game.pipeSpeed * deltaTime;
+	update (deltaTime, pipeSpeed){
+		this.x -= pipeSpeed * deltaTime;
     this.collider.update(deltaTime);
 	}
 	

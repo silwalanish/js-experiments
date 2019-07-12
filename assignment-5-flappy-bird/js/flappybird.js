@@ -1,7 +1,6 @@
 class FlappyBird{
 
-  constructor (game, x, y, width, height, flying, fainted) {
-    this.game = game;
+  constructor (x, y, width, height, flying, fainted, groundPos) {
     this.x = x;
     this.y = y;
     this.speed = 0;
@@ -12,6 +11,7 @@ class FlappyBird{
     this.flyingAnimation = flying;
     this.faintedAnimation = fainted;
     this.currentAnimation = this.flyingAnimation;
+    this.groundPos = groundPos;
     this.collider = new Collider(this, this.width, this.height - 11);
   }
 
@@ -25,10 +25,10 @@ class FlappyBird{
     ctx.closePath();
   }
 
-  update (deltaTime) {
-    if((this.isAlive() || !this.onTheGround()) && this.game.isPlaying){
+  update (deltaTime, gravity, isGamePlaying) {
+    if((this.isAlive() || !this.onTheGround()) && isGamePlaying){
       this.y += this.speed;
-      this.speed += this.game.gravity;
+      this.speed += gravity;
       this.angle += Math.atan2(this.speed, this.x);
       if(this.y < 0){
         this.y = 0;
@@ -47,12 +47,12 @@ class FlappyBird{
   }
 
   moveUp () {
-    //this.angle = -45;
+    this.angle = -Math.PI / 4;
     this.speed = -10;
   }
 
   onTheGround () {
-    return ((this.collider.y + this.collider.height) >= (this.game.height - this.game.options.groundSprite.sh));
+    return ((this.collider.y + this.collider.height) >= this.groundPos);
   }
 
   isAlive () {

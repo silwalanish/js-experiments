@@ -50,13 +50,8 @@ class Game{
     this.highScore = Number(window.localStorage.getItem('flappy-highScore'));
     this.hasSetHighScore = false;
 
-    document.addEventListener('keydown', (e) => {
-      this.keyPress(e);
-    });
-
     this.options.backgroundSprite = this.options.backgroundSprite || new Sprite("./images/bg.png", 0, 0);
     this.options.backgroundSprite.createPattern('repeat-x');
-
     
     this.options.groundSprite = this.options.groundSprite || new Sprite("./images/ground.png", 0, 0);
     this.options.groundSprite.createPattern('repeat-x');
@@ -73,10 +68,6 @@ class Game{
 
     this.startTime = Date.now();
     this.gameloop();
-  }
-
-  onKeyPress (e) {
-    
   }
 
   onClick (e) {
@@ -96,18 +87,18 @@ class Game{
     this.context.fillRect(0, 0, this.width, this.height);
     
     this.context.save();
-    this.context.translate(-this.backgroundOffset, this.height - this.options.groundSprite.sh);
+    this.context.translate(-this.backgroundOffset, this.getGroundPos());
     if(this.options.groundSprite.loaded){
       this.options.groundSprite.draw(this.context, 0, 0, 
         this.width + this.options.groundSprite.sw, this.options.groundSprite.sh);
-
     }
+
     if(this.options.backgroundSprite.loaded){
       this.context.translate(0, - this.options.backgroundSprite.sh);
       this.options.backgroundSprite.draw(this.context, 0, 0, 
         this.width + this.options.backgroundSprite.sw, this.options.backgroundSprite.sh);
-
     }
+
     this.context.restore();
     this.context.closePath();
   }
@@ -169,32 +160,45 @@ class Game{
   }
 
   update (deltaTime) {
+    this.updatePipes(deltaTime);
+    this.updateFlappy(deltaTime);
+  }
+
+  updatePipes (deltaTime) {
     if(this.flappy && this.flappy.isAlive()){
       this.pipes.forEach((pipe, index)=>{
-        if(pipe.outOfLeftBounds){
+        pipe.update(deltaTime, this.pipeSpeed);
+        
+        if(pipe.hasGoneOutOfLBounds()){
           this.pipes.splice(index, 1);
         }
-        pipe.update(deltaTime);
-        if(pipe.canCollideWith(this.flappy)){
-          let [collision, extent] = pipe.collidesWith(this.flappy);
-          if(collision){
-            this.flappy.fainted = true;
-            this.flappy.x += extent;
-          }else if(pipe.scoresPoint(this.flappy)){
-            this.score ++;
-          }
-        }
-      })
-    }
 
+        if(pipe.canCollideWith(this.flappy)){
+          this.checkAndResolveCollision(pipe);
+        }
+
+      });
+    }
+  }
+
+  updateFlappy (deltaTime) {
     if(this.flappy){
-      this.flappy.update(deltaTime);
+      this.flappy.update(deltaTime, this.gravity, this.isPlaying);
       if(this.flappy.onTheGround() && this.isRunning){
         this.flappy.fainted = true;
         this.gameover();
       }
     }
+  }
 
+  checkAndResolveCollision (pipe) {
+    let [collision, extent] = pipe.collidesWith(this.flappy);
+    if(collision){
+      this.flappy.fainted = true;
+      this.flappy.x += extent;
+    }else if(pipe.scoresPoint(this.flappy)){
+      this.score ++;
+    }
   }
 
   start () {
@@ -205,7 +209,7 @@ class Game{
 
     let flyingFlappy = new SpriteAnimation(new Sprite("./images/flappy-sprite-sheet.png", 0, 0, 66, 64), 0, 7, 10);
     let faintedFlappy = new SpriteAnimation(new Sprite("./images/flappy-fainted-sprite-sheet.png", 0, 0, 66, 64), 0, 1, 5);
-    this.flappy = new FlappyBird(this, 50, (this.height - this.options.groundSprite.sh) / 3, 60, 66, flyingFlappy, faintedFlappy);
+    this.flappy = new FlappyBird(50, this.getGroundPos() / 3, 60, 66, flyingFlappy, faintedFlappy, this.getGroundPos());
 
     this.pipeSpeed = this.options.pipeSpeed || GAME_DEFAULT_PIPE_SPEED;
 
@@ -216,7 +220,7 @@ class Game{
   
   generate () {
     let height = Math.random() * (0.3 * this.height) + 0.1 * this.height;
-    let pipe = new PipePair(this, height);
+    let pipe = new PipePair(this.width, height, this.height, this.flappy.height, this.getGroundPos());
     this.pipes.push(pipe);
   }
 
@@ -237,6 +241,10 @@ class Game{
       this.hasSetHighScore = true;
       window.localStorage.setItem('flappy-highScore', this.highScore);
     }
+  }
+
+  getGroundPos () {
+    return (this.height - this.options.groundSprite.sh);
   }
 
 }
