@@ -205,7 +205,13 @@ class Game{
   }
 
   update (deltaTime) {
+    this.updateBullets(deltaTime);
+    this.updateCars(deltaTime);
     
+    this.laneOffset += (this.carSpeed - 5) * deltaTime;
+  }
+
+  updateBullets (deltaTime) {
     for(let i = 0; i < this.bullets.length; i++){
       let bullet = this.bullets[i];
       bullet.update(deltaTime);
@@ -214,36 +220,44 @@ class Game{
         i--;
       }
     }
+  }
 
+  updateCars (deltaTime) {
     for(let i = 0; i < this.cars.length; i++){
       let car = this.cars[i];
       car.update(deltaTime);
       if(car != this.player){
-        let isCarRemoved = false;
-        for(let j = 0; j < this.bullets.length; j++){
-          let bullet = this.bullets[j];
-          if(car.contains(bullet.x, bullet.y)){
-            this.addScore(50);
-            this.cars.splice(i, 1);
-            this.bullets.splice(j, 1);
-            i--;
-            isCarRemoved = true;
-            break;
-          }
-        }
-        if(!isCarRemoved && car.lane == this.player.lane){
-          if(car.collides(this.player) && !carRemoved){
-            this.gameover();
-          }
-        }else if(car.y > this.height){
-          this.addScore(100);
+        
+        if(this.checkBulletCollision(car)){
           this.cars.splice(i, 1);
           i--;
+          this.addScore(50);
+        }else{
+          if(car.lane == this.player.lane){
+            if(car.collides(this.player)){
+              this.gameover();
+            }
+          }else if(car.y > this.height){
+            this.addScore(100);
+            this.cars.splice(i, 1);
+            i--;
+          }
         }
+
       }
     }
-    
-    this.laneOffset += (this.carSpeed - 5) * deltaTime;
+  }
+
+  checkBulletCollision (car) {
+    for(let j = 0; j < this.bullets.length; j++){
+      let bullet = this.bullets[j];
+      if(car.contains(bullet.x, bullet.y)){
+        this.addScore(50);
+        this.bullets.splice(j, 1);
+        return true;
+      }
+    }
+    return false;
   }
 
   start () {
